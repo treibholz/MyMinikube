@@ -6,9 +6,10 @@ mkdir -p ${INSTALL_PATH}
 PATH="${INSTALL_PATH}:${PATH}"
 echo "export PATH=\"${INSTALL_PATH}:\${PATH}\"" > minienv
 
-minicube_version='v0.21.0'
-dockermachine_version='v0.12.2'
-kvm_driver_version='v0.10.0'
+# get latest release on github
+minicube_version="$(curl --silent 'https://github.com/kubernetes/minikube/releases/latest' | sed 's!.*/releases/tag/\(v[0-9].*\)">.*!\1!')"
+dockermachine_version="$(curl --silent 'https://github.com/docker/machine/releases/latest' | sed 's!.*/releases/tag/\(v[0-9].*\)">.*!\1!')"
+kvm_driver_version="$(curl --silent 'https://github.com/dhiltgen/docker-machine-kvm/releases/latest' | sed 's!.*/releases/tag/\(v[0-9].*\)">.*!\1!')"
 # Dynamic
 _kubectl_version="$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"
 
