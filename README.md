@@ -3,14 +3,15 @@
 This installs a complete minikube on a Debian-Environment with KVM.
 
 * checks all downloaded binaries against local sha256sums
-* everything ends up in ~/.minicube
-* the downloaded binaries are in ~/.minicube/bin
-* just add ~/.minicube/bin to your $PATH afterwards
+* everything ends up in ~/.minikube
+* the downloaded binaries are put in ~/.minikube/bin
+* unfortunatelly ~/.minikube seems to be hardcoded in minikube, so if you want to put your stuff somewhere else, you have to^W^Wcan use symlinks (e.g. ln /data/storage/minikube ~/.minikube), before running this installer.
+* just add ~/.minikube/bin to your $PATH afterwards
 
 ## Usage:
 
 ```
-klaus@cyberdeck:~/minikube$ ./install.sh
+klaus@cyberdeck:~/MyMinikube$ ./install.sh
 Downloading minikube version v0.21.0
 ######################################################################## 100.0%
 Checking sha256sum of minikube: OK
@@ -39,20 +40,20 @@ Connecting to cluster...
 Setting up kubeconfig...
 Kubectl is now configured to use the cluster.
 
-run '. minienv' to enable your minicube-environment
+run '. minienv' to enable your minikube-environment
 
-klaus@cyberdeck:~/minikube$
+klaus@cyberdeck:~/MyMinikube$
 ```
 
 ```
-klaus@cyberdeck:~/minikube$ cat minienv
+klaus@cyberdeck:~/MyMinikube$ cat minienv
 export PATH="/home/klaus/.minikube/bin/:${PATH}"
-klaus@cyberdeck:~/minikube$ source minienv
-klaus@cyberdeck:~/minikube$ minikube status
+klaus@cyberdeck:~/MyMinikube$ source minienv
+klaus@cyberdeck:~/MyMinikube$ minikube status
 minikube: Running
 localkube: Running
 kubectl: Correctly Configured: pointing to minikube-vm at 192.168.42.182
-klaus@cyberdeck:~/minikube$
+klaus@cyberdeck:~/MyMinikube$
 ```
 
 

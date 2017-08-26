@@ -7,14 +7,14 @@ PATH="${INSTALL_PATH}:${PATH}"
 echo "export PATH=\"${INSTALL_PATH}:\${PATH}\"" > minienv
 
 # get latest release on github
-minicube_version="$(curl --silent 'https://github.com/kubernetes/minikube/releases/latest' | sed 's!.*/releases/tag/\(v[0-9].*\)">.*!\1!')"
+minikube_version="$(curl --silent 'https://github.com/kubernetes/minikube/releases/latest' | sed 's!.*/releases/tag/\(v[0-9].*\)">.*!\1!')"
 dockermachine_version="$(curl --silent 'https://github.com/docker/machine/releases/latest' | sed 's!.*/releases/tag/\(v[0-9].*\)">.*!\1!')"
 kvm_driver_version="$(curl --silent 'https://github.com/dhiltgen/docker-machine-kvm/releases/latest' | sed 's!.*/releases/tag/\(v[0-9].*\)">.*!\1!')"
 # Dynamic
-_kubectl_version="$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"
+kubectl_version="$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"
 
-_minicube_url="https://storage.googleapis.com/minikube/releases/${minicube_version}/minikube-linux-amd64"
-_kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${_kubectl_version}/bin/linux/amd64/kubectl"
+_minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-amd64"
+_kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${kubectl_version}/bin/linux/amd64/kubectl"
 _dockermachine_url="https://github.com/docker/machine/releases/download/${dockermachine_version}/docker-machine-Linux-x86_64"
 _kvm_driver_url="https://github.com/dhiltgen/docker-machine-kvm/releases/download/${kvm_driver_version}/docker-machine-driver-kvm-ubuntu16.04"
 
@@ -66,13 +66,13 @@ _download () {
     echo ""
 }
 
-_download minikube ${minicube_version} ${_minicube_url}
-_download kubectl ${_kubectl_version} ${_kubectl_url}
+_download minikube ${minikube_version} ${_minikube_url}
+_download kubectl ${kubectl_version} ${_kubectl_url}
 _download docker-machine ${dockermachine_version} ${_dockermachine_url}
 _download docker-machine-driver-kvm ${kvm_driver_version} ${_kvm_driver_url}
 
 minikube start --vm-driver=kvm
 
 echo "" 
-echo "run '. minienv' to enable your minicube-environment"
+echo "run '. minienv' to enable your minikube-environment"
 echo "" 
