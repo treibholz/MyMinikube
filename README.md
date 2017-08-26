@@ -1,15 +1,29 @@
-# MyMiniKube
+# MyMinikube
 
 This installs a complete minikube on a Debian-Environment with KVM.
 
 * checks all downloaded binaries against local sha256sums
 * everything ends up in ~/.minikube
 * the downloaded binaries are put in ~/.minikube/bin
-* unfortunatelly ~/.minikube seems to be hardcoded in minikube, so if you want to put your stuff somewhere else, you have to^W^Wcan use symlinks (e.g. ln /data/storage/minikube ~/.minikube), before running this installer.
+* unfortunatelly ~/.minikube seems to be hardcoded in minikube, so if you want to put your stuff somewhere else, you have to^W^Wcan use symlinks (e.g. ln -s /data/storage/minikube ~/.minikube), before running this installer.
 * just add ~/.minikube/bin to your $PATH afterwards
 
 ## Usage:
 
+```
+$ ./install.sh -h
+usage: ./install.sh [-hlscdm]
+
+ -h    this help
+ -l    use latest versions
+ -s    start/initialize your minikube afterwards
+ -c N  number of CPUs (default=2)
+ -m N  amount of memory (in MiB) to use (default=2048)
+ -d N  amount of diskspace to use (default=20g)
+
+```
+
+## Example:
 ```
 klaus@cyberdeck:~/MyMinikube$ ./install.sh
 Downloading minikube version v0.21.0
