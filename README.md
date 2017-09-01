@@ -12,11 +12,11 @@ This installs a complete minikube on a Debian-Environment with KVM.
 
 ```
 $ ./install.sh -h
-usage: ./install.sh [-hlscdm]
+usage: ./install.sh [-hlIcdm]
 
  -h    this help
  -l    use latest versions
- -s    start/initialize your minikube afterwards
+ -I    Only install, don' start/initialize your minikube afterwards
  -c N  number of CPUs (default=2)
  -m N  amount of memory (in MiB) to use (default=2048)
  -d N  amount of diskspace to use (default=20g)

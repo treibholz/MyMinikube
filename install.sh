@@ -2,24 +2,24 @@
 
 export LANG=C
 LATEST="false"
-START="false"
+START="true"
 MEMORY=2048
 CPUS=2
 DISK='20g'
 
 usage () { # {{{
-    echo "usage: ${0} [-hlscdm]"
+    echo "usage: ${0} [-hlIcdm]"
     echo ""
     echo " -h    this help"
     echo " -l    use latest versions"
-    echo " -s    start/initialize your minikube afterwards"
+    echo " -I    Only install, don' start/initialize your minikube afterwards"
     echo " -c N  number of CPUs (default=${CPUS})"
     echo " -m N  amount of memory (in MiB) to use (default=${MEMORY})"
     echo " -d N  amount of diskspace to use (default=${DISK})"
     echo ""
 } # }}}
 
-while getopts "hlsm:c:d:" OPTION; do # {{{
+while getopts "hlIm:c:d:" OPTION; do # {{{
     case ${OPTION} in
         h)
             usage
@@ -28,8 +28,8 @@ while getopts "hlsm:c:d:" OPTION; do # {{{
         l)
             LATEST="true"
         ;;
-        s)
-            START="true"
+        I)
+            START="false"
         ;;
         m)
             MEMORY=${OPTARG}
