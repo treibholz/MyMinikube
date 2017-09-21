@@ -4,7 +4,7 @@ export LANG=C
 LATEST="false"
 START="true"
 MEMORY=2048
-CPUS=2
+CPUS="$(($(grep -c vendor_id /proc/cpuinfo)/2))"
 DISK='20g'
 
 usage () { # {{{
@@ -13,7 +13,7 @@ usage () { # {{{
     echo " -h    this help"
     echo " -l    use latest versions"
     echo " -I    Only install, don' start/initialize your minikube afterwards"
-    echo " -c N  number of CPUs (default=${CPUS})"
+    echo " -c N  number of CPUs (default=${CPUS} (half of your host))"
     echo " -m N  amount of memory (in MiB) to use (default=${MEMORY})"
     echo " -d N  amount of diskspace to use (default=${DISK})"
     echo ""
