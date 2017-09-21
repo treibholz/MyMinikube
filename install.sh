@@ -103,10 +103,10 @@ if [[ ${LATEST} == 'true' ]]; then
     kubectl_version="$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"
 else
     echo 'Getting predefined versions of everything.'
-    minikube_version="v0.21.0"
+    minikube_version="v0.22.2"
     dockermachine_version="v0.12.2"
     kvm_driver_version="v0.10.0"
-    kubectl_version="v1.7.5"
+    kubectl_version="v1.7.6"
 fi
 
 _minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-amd64"
