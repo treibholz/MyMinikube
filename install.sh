@@ -117,8 +117,18 @@ _kvm_driver_url="https://github.com/dhiltgen/docker-machine-kvm/releases/downloa
 export INSTALL_PATH="${HOME}/.minikube/bin/"
 mkdir -p ${INSTALL_PATH}
 PATH="${INSTALL_PATH}:${PATH}"
-echo "export PATH=\"${INSTALL_PATH}:\${PATH}\"" > minienv
 
+cat <<- EOF > minienv
+export PATH="${INSTALL_PATH}:\${PATH}"
+
+if [ "\$(basename \$BASH)" == "bash" ]; then
+    echo "detected bash"
+    source <(kubectl completion bash)
+    source <(minikube completion bash)
+    eval \$(minikube docker-env)
+    PS1="[+] \${PS1}"
+fi
+EOF
 
 _download minikube ${minikube_version} ${_minikube_url}
 _download kubectl ${kubectl_version} ${_kubectl_url}
