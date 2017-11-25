@@ -103,10 +103,10 @@ if [[ ${LATEST} == 'true' ]]; then
     kubectl_version="$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"
 else
     echo 'Getting predefined versions of everything.'
-    minikube_version="v0.22.2"
-    dockermachine_version="v0.12.2"
+    minikube_version="v0.23.0"
+    dockermachine_version="v0.13.0"
     kvm_driver_version="v0.10.0"
-    kubectl_version="v1.7.6"
+    kubectl_version="v1.8.4"
 fi
 
 _minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-amd64"
@@ -117,8 +117,18 @@ _kvm_driver_url="https://github.com/dhiltgen/docker-machine-kvm/releases/downloa
 export INSTALL_PATH="${HOME}/.minikube/bin/"
 mkdir -p ${INSTALL_PATH}
 PATH="${INSTALL_PATH}:${PATH}"
-echo "export PATH=\"${INSTALL_PATH}:\${PATH}\"" > minienv
 
+cat <<- EOF > minienv
+export PATH="${INSTALL_PATH}:\${PATH}"
+
+if [ "\$(basename \$BASH)" == "bash" ]; then
+    echo "detected bash"
+    source <(kubectl completion bash)
+    source <(minikube completion bash)
+    eval \$(minikube docker-env)
+    PS1="[+] \${PS1}"
+fi
+EOF
 
 _download minikube ${minikube_version} ${_minikube_url}
 _download kubectl ${kubectl_version} ${_kubectl_url}
