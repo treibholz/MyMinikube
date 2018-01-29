@@ -121,13 +121,27 @@ PATH="${INSTALL_PATH}:${PATH}"
 cat <<- EOF > minienv
 export PATH="${INSTALL_PATH}:\${PATH}"
 
-if [ "\$(basename \$BASH)" == "bash" ]; then
-    echo "detected bash"
-    source <(kubectl completion bash)
-    source <(minikube completion bash)
-    eval \$(minikube docker-env)
-    PS1="[+] \${PS1}"
-fi
+__shell=\$(basename \$(realpath /proc/\$\$/exe))
+
+case \${__shell} in
+    bash)
+        echo "detected bash"
+        source <(kubectl completion bash)
+        source <(minikube completion bash)
+        eval \$(minikube docker-env)
+        PS1="[+] \${PS1}"
+    ;;
+    zsh)
+        echo "detected zsh"
+        source <(kubectl completion zsh)
+        source <(minikube completion zsh)
+        eval \$(minikube docker-env)
+    ;;
+    *)
+        echo "Unknown shell"
+    ;;
+esac
+
 EOF
 
 _download minikube ${minikube_version} ${_minikube_url}
