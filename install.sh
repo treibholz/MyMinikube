@@ -120,7 +120,6 @@ PATH="${INSTALL_PATH}:${PATH}"
 
 cat <<- EOF > minienv
 export PATH="${INSTALL_PATH}:\${PATH}"
-
 __shell=\$(basename \$(realpath /proc/\$\$/exe))
 
 case \${__shell} in
@@ -141,7 +140,7 @@ case \${__shell} in
         echo "Unknown shell"
     ;;
 esac
-
+# vim:sh
 EOF
 
 _download minikube ${minikube_version} ${_minikube_url}
