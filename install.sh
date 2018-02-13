@@ -2,24 +2,24 @@
 
 export LANG=C
 LATEST="false"
-START="false"
+START="true"
 MEMORY=2048
-CPUS=2
+CPUS="$(($(grep -c vendor_id /proc/cpuinfo)/2))"
 DISK='20g'
 
 usage () { # {{{
-    echo "usage: ${0} [-hlscdm]"
+    echo "usage: ${0} [-hlIcdm]"
     echo ""
     echo " -h    this help"
     echo " -l    use latest versions"
-    echo " -s    start/initialize your minikube afterwards"
-    echo " -c N  number of CPUs (default=${CPUS})"
+    echo " -I    Only install, don' start/initialize your minikube afterwards"
+    echo " -c N  number of CPUs (default=${CPUS} (half of your host))"
     echo " -m N  amount of memory (in MiB) to use (default=${MEMORY})"
     echo " -d N  amount of diskspace to use (default=${DISK})"
     echo ""
 } # }}}
 
-while getopts "hlsm:c:d:" OPTION; do # {{{
+while getopts "hlIm:c:d:" OPTION; do # {{{
     case ${OPTION} in
         h)
             usage
@@ -28,8 +28,8 @@ while getopts "hlsm:c:d:" OPTION; do # {{{
         l)
             LATEST="true"
         ;;
-        s)
-            START="true"
+        I)
+            START="false"
         ;;
         m)
             MEMORY=${OPTARG}
@@ -103,10 +103,10 @@ if [[ ${LATEST} == 'true' ]]; then
     kubectl_version="$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"
 else
     echo 'Getting predefined versions of everything.'
-    minikube_version="v0.21.0"
-    dockermachine_version="v0.12.2"
+    minikube_version="v0.25.0"
+    dockermachine_version="v0.13.0"
     kvm_driver_version="v0.10.0"
-    kubectl_version="v1.7.4"
+    kubectl_version="v1.9.2"
 fi
 
 _minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-amd64"
@@ -117,8 +117,31 @@ _kvm_driver_url="https://github.com/dhiltgen/docker-machine-kvm/releases/downloa
 export INSTALL_PATH="${HOME}/.minikube/bin/"
 mkdir -p ${INSTALL_PATH}
 PATH="${INSTALL_PATH}:${PATH}"
-echo "export PATH=\"${INSTALL_PATH}:\${PATH}\"" > minienv
 
+cat <<- EOF > minienv
+export PATH="${INSTALL_PATH}:\${PATH}"
+__shell=\$(basename \$(realpath /proc/\$\$/exe))
+
+case \${__shell} in
+    bash)
+        echo "detected bash"
+        source <(kubectl completion bash)
+        source <(minikube completion bash)
+        eval \$(minikube docker-env)
+        PS1="[+] \${PS1}"
+    ;;
+    zsh)
+        echo "detected zsh"
+        source <(kubectl completion zsh)
+        source <(minikube completion zsh)
+        eval \$(minikube docker-env)
+    ;;
+    *)
+        echo "Unknown shell"
+    ;;
+esac
+# vim:sh
+EOF
 
 _download minikube ${minikube_version} ${_minikube_url}
 _download kubectl ${kubectl_version} ${_kubectl_url}
