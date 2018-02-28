@@ -118,8 +118,8 @@ else
     minikube_version="v0.25.0"
     dockermachine_version="v0.13.0"
     kvm_driver_version="v0.10.0"
-    kubectl_version="v1.9.2"
-    helm_version="v2.7.2"
+    kubectl_version="v1.9.3"
+    helm_version="v2.8.1"
 fi
 
 _minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-amd64"
