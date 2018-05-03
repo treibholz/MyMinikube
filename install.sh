@@ -4,8 +4,23 @@ export LANG=C
 LATEST="false"
 START="true"
 MEMORY=2048
-CPUS="$(($(grep -c vendor_id /proc/cpuinfo)/2))"
+CPUS="$(($(nproc)/2))"
 DISK='20g'
+ARCH="$(dpkg --print-architecture)"
+
+# docker-machine calls amd64 differently...
+if [ ${ARCH} == 'amd64' ]; then
+    DM_ARCH='x84_64'
+else
+    DM_ARCH=${ARCH}
+fi
+# and helm does not know armhf...
+if [ ${ARCH} == 'armhf' ]; then
+    HELM_ARCH='arm'
+else
+    HELM_ARCH=${ARCH}
+fi
+
 
 usage () { # {{{
     echo "usage: ${0} [-hlIcdm]"
@@ -55,7 +70,7 @@ _download () { # {{{
     local __tar_path=${5}
 
     local __cur_dir="$(pwd)"
-    local __sha256sum="${__cur_dir}/known_sha256sums/${__name}_${__version}"
+    local __sha256sum="${__cur_dir}/known_sha256sums/${ARCH}_${__name}_${__version}"
     local __download=1
 
     echo "Downloading ${__name} version ${__version}"
@@ -122,11 +137,11 @@ else
     helm_version="v2.9.0"
 fi
 
-_minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-amd64"
-_kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${kubectl_version}/bin/linux/amd64/kubectl"
-_dockermachine_url="https://github.com/docker/machine/releases/download/${dockermachine_version}/docker-machine-Linux-x86_64"
+_minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-${ARCH}"
+_kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${kubectl_version}/bin/linux/${ARCH}/kubectl"
+_dockermachine_url="https://github.com/docker/machine/releases/download/${dockermachine_version}/docker-machine-Linux-${DM_ARCH}"
 _kvm_driver_url="https://github.com/dhiltgen/docker-machine-kvm/releases/download/${kvm_driver_version}/docker-machine-driver-kvm-ubuntu16.04"
-_helm_url="https://storage.googleapis.com/kubernetes-helm/helm-${helm_version}-linux-amd64.tar.gz"
+_helm_url="https://storage.googleapis.com/kubernetes-helm/helm-${helm_version}-linux-${HELM_ARCH}.tar.gz"
 
 export INSTALL_PATH="${HOME}/.minikube/bin/"
 mkdir -p ${INSTALL_PATH}
@@ -163,7 +178,7 @@ _download minikube ${minikube_version} ${_minikube_url}
 _download kubectl ${kubectl_version} ${_kubectl_url}
 _download docker-machine ${dockermachine_version} ${_dockermachine_url}
 _download docker-machine-driver-kvm ${kvm_driver_version} ${_kvm_driver_url}
-_download helm ${helm_version} ${_helm_url} tar.gz linux-amd64/helm
+_download helm ${helm_version} ${_helm_url} tar.gz linux-${HELM_ARCH}/helm
 
 if [[ ${START} == 'true' ]]; then
     echo "Starting minikube with ${MEMORY} MiB RAM, ${CPUS} CPUs and ${DISK} disk size:" 
