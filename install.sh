@@ -4,8 +4,23 @@ export LANG=C
 LATEST="false"
 START="true"
 MEMORY=2048
-CPUS="$(($(grep -c vendor_id /proc/cpuinfo)/2))"
+CPUS="$(($(nproc)/2))"
 DISK='20g'
+ARCH="$(dpkg --print-architecture)"
+
+# docker-machine calls amd64 differently...
+if [ ${ARCH} == 'amd64' ]; then
+    DM_ARCH='x84_64'
+else
+    DM_ARCH=${ARCH}
+fi
+# and helm does not know armhf...
+if [ ${ARCH} == 'armhf' ]; then
+    HELM_ARCH='arm'
+else
+    HELM_ARCH=${ARCH}
+fi
+
 
 usage () { # {{{
     echo "usage: ${0} [-hlIcdm]"
@@ -51,9 +66,11 @@ _download () { # {{{
     local __name=$1
     local __version=$2
     local __url=$3
+    local __type=${4:-binary}
+    local __tar_path=${5}
 
     local __cur_dir="$(pwd)"
-    local __sha256sum="${__cur_dir}/known_sha256sums/${__name}_${__version}"
+    local __sha256sum="${__cur_dir}/known_sha256sums/${ARCH}_${__name}_${__version}"
     local __download=1
 
     echo "Downloading ${__name} version ${__version}"
@@ -67,15 +84,24 @@ _download () { # {{{
                 echo "no need to download."
                 __download=0
             else
-                echo "${__name} is not the expected file, dowloading again..."
+                echo "${__name} is not the expected file, downloading again..."
             fi
             cd ${__cur_dir}
         fi
     fi
     
     if [[ $__download -gt 0 ]]; then
-        curl --progress-bar -Lo ${INSTALL_PATH}/${__name} ${__url}
- 
+
+        case ${__type} in
+            binary)
+                curl --progress-bar -Lo ${INSTALL_PATH}/${__name} ${__url}
+            ;;
+            tar.gz)
+                __components="$(echo ${__tar_path} |  grep -Eo '/' | wc -l)"
+                curl --progress-bar ${__url} \
+                    | tar -zx -C ${INSTALL_PATH} --strip-components ${__components} ${__tar_path}
+        esac
+
         cd ${INSTALL_PATH}
         if [[ -f ${__sha256sum}  ]]; then
             echo -ne "Checking sha256sum of "
@@ -101,18 +127,21 @@ if [[ ${LATEST} == 'true' ]]; then
     dockermachine_version="$(_latest_github_release docker/machine)"
     kvm_driver_version="$(_latest_github_release dhiltgen/docker-machine-kvm)"
     kubectl_version="$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"
+    helm_version="$(_latest_github_release kubernetes/helm)"
 else
     echo 'Getting predefined versions of everything.'
-    minikube_version="v0.25.0"
-    dockermachine_version="v0.13.0"
+    minikube_version="v0.26.1"
+    dockermachine_version="v0.14.0"
     kvm_driver_version="v0.10.0"
-    kubectl_version="v1.9.2"
+    kubectl_version="v1.10.2"
+    helm_version="v2.9.0"
 fi
 
-_minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-amd64"
-_kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${kubectl_version}/bin/linux/amd64/kubectl"
-_dockermachine_url="https://github.com/docker/machine/releases/download/${dockermachine_version}/docker-machine-Linux-x86_64"
+_minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-${ARCH}"
+_kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${kubectl_version}/bin/linux/${ARCH}/kubectl"
+_dockermachine_url="https://github.com/docker/machine/releases/download/${dockermachine_version}/docker-machine-Linux-${DM_ARCH}"
 _kvm_driver_url="https://github.com/dhiltgen/docker-machine-kvm/releases/download/${kvm_driver_version}/docker-machine-driver-kvm-ubuntu16.04"
+_helm_url="https://storage.googleapis.com/kubernetes-helm/helm-${helm_version}-linux-${HELM_ARCH}.tar.gz"
 
 export INSTALL_PATH="${HOME}/.minikube/bin/"
 mkdir -p ${INSTALL_PATH}
@@ -127,6 +156,7 @@ case \${__shell} in
         echo "detected bash"
         source <(kubectl completion bash)
         source <(minikube completion bash)
+        source <(helm completion bash)
         eval \$(minikube docker-env)
         PS1="[+] \${PS1}"
     ;;
@@ -134,19 +164,21 @@ case \${__shell} in
         echo "detected zsh"
         source <(kubectl completion zsh)
         source <(minikube completion zsh)
+        source <(helm completion zsh)
         eval \$(minikube docker-env)
     ;;
     *)
         echo "Unknown shell"
     ;;
 esac
-# vim:sh
+# vim:ft=sh
 EOF
 
 _download minikube ${minikube_version} ${_minikube_url}
 _download kubectl ${kubectl_version} ${_kubectl_url}
 _download docker-machine ${dockermachine_version} ${_dockermachine_url}
 _download docker-machine-driver-kvm ${kvm_driver_version} ${_kvm_driver_url}
+_download helm ${helm_version} ${_helm_url} tar.gz linux-${HELM_ARCH}/helm
 
 if [[ ${START} == 'true' ]]; then
     echo "Starting minikube with ${MEMORY} MiB RAM, ${CPUS} CPUs and ${DISK} disk size:" 
