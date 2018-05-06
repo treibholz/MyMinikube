@@ -40,7 +40,7 @@ usage () { # {{{
     echo " -m N  amount of memory (in MiB) to use (default=${MEMORY})"
     echo " -d N  amount of diskspace to use (default=${DISK})"
     echo " -D    DEBUG Infos"
-    echo " -T    Tools only, no minikube and kvm-stuff"
+    echo " -T    Tools only, no minikube and kvm-stuff, and don't start anything"
     echo ""
 } # }}}
 
@@ -70,6 +70,7 @@ while getopts "hlIm:c:d:DT" OPTION; do # {{{
         ;;
         T)
             TOOLS_ONLY=1
+            START="false"
         ;;
     esac
 done # }}}
