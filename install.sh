@@ -7,23 +7,31 @@ MEMORY=2048
 CPUS="$(($(nproc)/2))"
 DISK='20g'
 ARCH="$(dpkg --print-architecture)"
+DEBUG=0
 
-# docker-machine calls amd64 differently...
-if [ ${ARCH} == 'amd64' ]; then
-    DM_ARCH='x84_64'
-else
-    DM_ARCH=${ARCH}
-fi
-# and helm does not know armhf...
-if [ ${ARCH} == 'armhf' ]; then
-    HELM_ARCH='arm'
-else
-    HELM_ARCH=${ARCH}
-fi
+DM_ARCH=${ARCH}
+HELM_ARCH=${ARCH}
+KUBECTL_ARCH=${ARCH}
+UNSUPPORTED=""
+TOOLS_ONLY=0
 
+case ${ARCH} in
+    armhf)
+        HELM_ARCH='arm'
+        UNSUPPORTED="docker-machine-driver-kvm|minikube|"
+    ;;
+    aarch64)
+        HELM_ARCH='arm64'
+        KUBECTL_ARCH='arm64'
+        UNSUPPORTED="docker-machine-driver-kvm|minikube|"
+    ;;
+    amd64)
+        DM_ARCH='x86_64'
+    ;;
+esac
 
 usage () { # {{{
-    echo "usage: ${0} [-hlIcdm]"
+    echo "usage: ${0} [-hlIcdmDT]"
     echo ""
     echo " -h    this help"
     echo " -l    use latest versions"
@@ -31,10 +39,12 @@ usage () { # {{{
     echo " -c N  number of CPUs (default=${CPUS} (half of your host))"
     echo " -m N  amount of memory (in MiB) to use (default=${MEMORY})"
     echo " -d N  amount of diskspace to use (default=${DISK})"
+    echo " -D    DEBUG Infos"
+    echo " -T    Tools only, no minikube and kvm-stuff, and don't start anything"
     echo ""
 } # }}}
 
-while getopts "hlIm:c:d:" OPTION; do # {{{
+while getopts "hlIm:c:d:DT" OPTION; do # {{{
     case ${OPTION} in
         h)
             usage
@@ -55,11 +65,27 @@ while getopts "hlIm:c:d:" OPTION; do # {{{
         d)
             DISK=${OPTARG}
         ;;
+        D)
+            DEBUG=1
+        ;;
+        T)
+            TOOLS_ONLY=1
+            START="false"
+        ;;
     esac
 done # }}}
 
 _latest_github_release () { # {{{
     curl --silent "https://github.com/${1}/releases/latest" | sed 's!.*/releases/tag/\(v[0-9].*\)">.*!\1!'
+} # }}}
+
+__debug () { # {{{
+    if [[ ${DEBUG} -gt 0 ]]; then
+        echo -ne '*** DEBUG: '
+        return 0
+    else
+        return 1
+    fi
 } # }}}
 
 _download () { # {{{
@@ -69,55 +95,60 @@ _download () { # {{{
     local __type=${4:-binary}
     local __tar_path=${5}
 
-    local __cur_dir="$(pwd)"
-    local __sha256sum="${__cur_dir}/known_sha256sums/${ARCH}_${__name}_${__version}"
-    local __download=1
+    if grep -q "${__name}|" <( echo "${UNSUPPORTED}" ) ; then
+        echo "INFO: ${__name} is unsupported for ${ARCH}, can't download!"
+    else
 
-    echo "Downloading ${__name} version ${__version}"
+        local __cur_dir="$(pwd)"
+        local __sha256sum="${__cur_dir}/known_sha256sums/${ARCH}_${__name}_${__version}"
+        local __download=1
 
-    if [[ -f ${INSTALL_PATH}/${__name} ]]; then
-        if [[ -f ${__sha256sum}  ]]; then
-            cd ${INSTALL_PATH}
-            echo -ne "Checking sha256sum of locally available "
-            
-            if sha256sum -c ${__sha256sum}; then
-                echo "no need to download."
-                __download=0
-            else
-                echo "${__name} is not the expected file, downloading again..."
+        echo "Downloading ${__name} version ${__version}"
+
+        if [[ -f ${INSTALL_PATH}/${__name} ]]; then
+            if [[ -f ${__sha256sum}  ]]; then
+                cd ${INSTALL_PATH}
+                echo -ne "Checking sha256sum of locally available "
+                
+                if sha256sum -c ${__sha256sum}; then
+                    echo "no need to download."
+                    __download=0
+                else
+                    echo "${__name} is not the expected file, downloading again..."
+                fi
+                cd ${__cur_dir}
             fi
-            cd ${__cur_dir}
         fi
-    fi
-    
-    if [[ $__download -gt 0 ]]; then
+        
+        if [[ $__download -gt 0 ]]; then
+            __debug && echo ${__url} 
+            case ${__type} in
+                binary)
+                    curl --progress-bar -Lo ${INSTALL_PATH}/${__name} ${__url}
+                ;;
+                tar.gz)
+                    __components="$(echo ${__tar_path} |  grep -Eo '/' | wc -l)"
+                    curl --progress-bar ${__url} \
+                        | tar -zx -C ${INSTALL_PATH} --strip-components ${__components} ${__tar_path}
+            esac
 
-        case ${__type} in
-            binary)
-                curl --progress-bar -Lo ${INSTALL_PATH}/${__name} ${__url}
-            ;;
-            tar.gz)
-                __components="$(echo ${__tar_path} |  grep -Eo '/' | wc -l)"
-                curl --progress-bar ${__url} \
-                    | tar -zx -C ${INSTALL_PATH} --strip-components ${__components} ${__tar_path}
-        esac
-
-        cd ${INSTALL_PATH}
-        if [[ -f ${__sha256sum}  ]]; then
-            echo -ne "Checking sha256sum of "
-            sha256sum -c ${__sha256sum}
-            cd ${__cur_dir}
-        else
-            echo "Warning: Unknown version (${__version}, can't check sha256sum of ${__name}."
-            echo "         Generating new sha256sum for later"
-            sha256sum ${__name} > ${__sha256sum}
-            cd ${__cur_dir}
-            git add ${__sha256sum}
-            git commit -m "New sha256sum for ${__name} ${__version}"
+            cd ${INSTALL_PATH}
+            if [[ -f ${__sha256sum}  ]]; then
+                echo -ne "Checking sha256sum of "
+                sha256sum -c ${__sha256sum}
+                cd ${__cur_dir}
+            else
+                echo "Warning: Unknown version (${__version}, can't check sha256sum of ${__name}."
+                echo "         Generating new sha256sum for later"
+                sha256sum ${__name} > ${__sha256sum}
+                cd ${__cur_dir}
+                git add ${__sha256sum}
+                git commit -m "New sha256sum for ${__name} ${__version}"
+            fi
         fi
-    fi
 
-    chmod +x ${INSTALL_PATH}/${__name}
+        chmod +x ${INSTALL_PATH}/${__name}
+    fi
     echo ""
 } # }}}
 
@@ -137,8 +168,8 @@ else
     helm_version="v2.9.0"
 fi
 
-_minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-${ARCH}"
-_kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${kubectl_version}/bin/linux/${ARCH}/kubectl"
+_minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-${KUBECTL_ARCH}"
+_kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${kubectl_version}/bin/linux/${KUBECTL_ARCH}/kubectl"
 _dockermachine_url="https://github.com/docker/machine/releases/download/${dockermachine_version}/docker-machine-Linux-${DM_ARCH}"
 _kvm_driver_url="https://github.com/dhiltgen/docker-machine-kvm/releases/download/${kvm_driver_version}/docker-machine-driver-kvm-ubuntu16.04"
 _helm_url="https://storage.googleapis.com/kubernetes-helm/helm-${helm_version}-linux-${HELM_ARCH}.tar.gz"
@@ -174,11 +205,15 @@ esac
 # vim:ft=sh
 EOF
 
-_download minikube ${minikube_version} ${_minikube_url}
+
 _download kubectl ${kubectl_version} ${_kubectl_url}
-_download docker-machine ${dockermachine_version} ${_dockermachine_url}
-_download docker-machine-driver-kvm ${kvm_driver_version} ${_kvm_driver_url}
 _download helm ${helm_version} ${_helm_url} tar.gz linux-${HELM_ARCH}/helm
+
+if [[ ${TOOLS_ONLY} -eq 0 ]]; then
+    _download minikube ${minikube_version} ${_minikube_url}
+    _download docker-machine ${dockermachine_version} ${_dockermachine_url}
+    _download docker-machine-driver-kvm ${kvm_driver_version} ${_kvm_driver_url}
+fi
 
 if [[ ${START} == 'true' ]]; then
     echo "Starting minikube with ${MEMORY} MiB RAM, ${CPUS} CPUs and ${DISK} disk size:" 
