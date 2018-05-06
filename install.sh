@@ -16,6 +16,9 @@ UNSUPPORTED=""
 TOOLS_ONLY=0
 
 case ${ARCH} in
+    arm)
+        UNSUPPORTED="docker-machine-driver-kvm|minikube|docker-machine|"
+    ;;
     armhf)
         HELM_ARCH='arm'
         UNSUPPORTED="docker-machine-driver-kvm|minikube|"
