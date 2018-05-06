@@ -18,12 +18,12 @@ TOOLS_ONLY=0
 case ${ARCH} in
     armhf)
         HELM_ARCH='arm'
-        UNSUPPORTED="docker-machine-driver-kvm|"
+        UNSUPPORTED="docker-machine-driver-kvm|minikube|"
     ;;
     aarch64)
         HELM_ARCH='arm64'
         KUBECTL_ARCH='arm64'
-        UNSUPPORTED="docker-machine-driver-kvm|"
+        UNSUPPORTED="docker-machine-driver-kvm|minikube|"
     ;;
     amd64)
         DM_ARCH='x86_64'
