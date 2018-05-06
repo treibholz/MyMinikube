@@ -153,14 +153,14 @@ _download () { # {{{
 } # }}}
 
 if [[ ${LATEST} == 'true' ]]; then
-    echo 'Getting latest versions of everything! \o/'
+    echo 'Getting latest versions! \o/'
     minikube_version="$(_latest_github_release kubernetes/minikube)"
     dockermachine_version="$(_latest_github_release docker/machine)"
     kvm_driver_version="$(_latest_github_release dhiltgen/docker-machine-kvm)"
     kubectl_version="$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"
     helm_version="$(_latest_github_release kubernetes/helm)"
 else
-    echo 'Getting predefined versions of everything.'
+    echo 'Getting predefined versions.'
     minikube_version="v0.26.1"
     dockermachine_version="v0.14.0"
     kvm_driver_version="v0.10.0"
