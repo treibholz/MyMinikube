@@ -12,14 +12,17 @@ DEBUG=0
 DM_ARCH=${ARCH}
 HELM_ARCH=${ARCH}
 KUBECTL_ARCH=${ARCH}
+UNSUPPORTED=""
 
 case ${ARCH} in
     armhf)
         HELM_ARCH='arm'
+        UNSUPPORTED="docker-machine-driver-kvm"
     ;;
     aarch64)
         HELM_ARCH='arm64'
         KUBECTL_ARCH='arm64'
+        UNSUPPORTED="docker-machine-driver-kvm"
     ;;
     amd64)
         DM_ARCH='x86_64'
@@ -85,56 +88,61 @@ _download () { # {{{
     local __type=${4:-binary}
     local __tar_path=${5}
 
-    local __cur_dir="$(pwd)"
-    local __sha256sum="${__cur_dir}/known_sha256sums/${ARCH}_${__name}_${__version}"
-    local __download=1
+    if grep -q ${__name} <( echo "${UNSUPPORTED}" ) ; then
+        echo "INFO: ${__name} is unsupported for ${ARCH}, can't download!"
+    else
 
-    echo "Downloading ${__name} version ${__version}"
+        local __cur_dir="$(pwd)"
+        local __sha256sum="${__cur_dir}/known_sha256sums/${ARCH}_${__name}_${__version}"
+        local __download=1
 
-    if [[ -f ${INSTALL_PATH}/${__name} ]]; then
-        if [[ -f ${__sha256sum}  ]]; then
-            cd ${INSTALL_PATH}
-            echo -ne "Checking sha256sum of locally available "
-            
-            if sha256sum -c ${__sha256sum}; then
-                echo "no need to download."
-                __download=0
-            else
-                echo "${__name} is not the expected file, downloading again..."
+        echo "Downloading ${__name} version ${__version}"
+
+        if [[ -f ${INSTALL_PATH}/${__name} ]]; then
+            if [[ -f ${__sha256sum}  ]]; then
+                cd ${INSTALL_PATH}
+                echo -ne "Checking sha256sum of locally available "
+                
+                if sha256sum -c ${__sha256sum}; then
+                    echo "no need to download."
+                    __download=0
+                else
+                    echo "${__name} is not the expected file, downloading again..."
+                fi
+                cd ${__cur_dir}
             fi
-            cd ${__cur_dir}
         fi
-    fi
-    
-    if [[ $__download -gt 0 ]]; then
-        __debug && echo ${__url} 
-        case ${__type} in
-            binary)
-                curl --progress-bar -Lo ${INSTALL_PATH}/${__name} ${__url}
-            ;;
-            tar.gz)
-                __components="$(echo ${__tar_path} |  grep -Eo '/' | wc -l)"
-                curl --progress-bar ${__url} \
-                    | tar -zx -C ${INSTALL_PATH} --strip-components ${__components} ${__tar_path}
-        esac
+        
+        if [[ $__download -gt 0 ]]; then
+            __debug && echo ${__url} 
+            case ${__type} in
+                binary)
+                    curl --progress-bar -Lo ${INSTALL_PATH}/${__name} ${__url}
+                ;;
+                tar.gz)
+                    __components="$(echo ${__tar_path} |  grep -Eo '/' | wc -l)"
+                    curl --progress-bar ${__url} \
+                        | tar -zx -C ${INSTALL_PATH} --strip-components ${__components} ${__tar_path}
+            esac
 
-        cd ${INSTALL_PATH}
-        if [[ -f ${__sha256sum}  ]]; then
-            echo -ne "Checking sha256sum of "
-            sha256sum -c ${__sha256sum}
-            cd ${__cur_dir}
-        else
-            echo "Warning: Unknown version (${__version}, can't check sha256sum of ${__name}."
-            echo "         Generating new sha256sum for later"
-            sha256sum ${__name} > ${__sha256sum}
-            cd ${__cur_dir}
-            git add ${__sha256sum}
-            git commit -m "New sha256sum for ${__name} ${__version}"
+            cd ${INSTALL_PATH}
+            if [[ -f ${__sha256sum}  ]]; then
+                echo -ne "Checking sha256sum of "
+                sha256sum -c ${__sha256sum}
+                cd ${__cur_dir}
+            else
+                echo "Warning: Unknown version (${__version}, can't check sha256sum of ${__name}."
+                echo "         Generating new sha256sum for later"
+                sha256sum ${__name} > ${__sha256sum}
+                cd ${__cur_dir}
+                git add ${__sha256sum}
+                git commit -m "New sha256sum for ${__name} ${__version}"
+            fi
         fi
-    fi
 
-    chmod +x ${INSTALL_PATH}/${__name}
-    echo ""
+        chmod +x ${INSTALL_PATH}/${__name}
+        echo ""
+    fi
 } # }}}
 
 if [[ ${LATEST} == 'true' ]]; then
