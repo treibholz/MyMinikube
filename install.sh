@@ -17,12 +17,12 @@ UNSUPPORTED=""
 case ${ARCH} in
     armhf)
         HELM_ARCH='arm'
-        UNSUPPORTED="docker-machine-driver-kvm"
+        UNSUPPORTED="docker-machine-driver-kvm|"
     ;;
     aarch64)
         HELM_ARCH='arm64'
         KUBECTL_ARCH='arm64'
-        UNSUPPORTED="docker-machine-driver-kvm"
+        UNSUPPORTED="docker-machine-driver-kvm|"
     ;;
     amd64)
         DM_ARCH='x86_64'
@@ -88,7 +88,7 @@ _download () { # {{{
     local __type=${4:-binary}
     local __tar_path=${5}
 
-    if grep -q ${__name} <( echo "${UNSUPPORTED}" ) ; then
+    if grep -q "${__name}|" <( echo "${UNSUPPORTED}" ) ; then
         echo "INFO: ${__name} is unsupported for ${ARCH}, can't download!"
     else
 
