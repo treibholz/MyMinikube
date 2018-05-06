@@ -16,11 +16,14 @@ else
     DM_ARCH=${ARCH}
 fi
 # and helm does not know armhf...
-if [ ${ARCH} == 'armhf' ]; then
-    HELM_ARCH='arm'
-else
-    HELM_ARCH=${ARCH}
-fi
+case ${ARCH} in
+    armhf|aarch64)
+        HELM_ARCH='arm'
+    ;;
+    *)
+        HELM_ARCH=${ARCH}
+    ;;
+esac
 
 
 usage () { # {{{
