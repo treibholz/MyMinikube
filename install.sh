@@ -25,7 +25,6 @@ case ${ARCH} in
     ;;
 esac
 
-
 usage () { # {{{
     echo "usage: ${0} [-hlIcdm]"
     echo ""
@@ -69,14 +68,14 @@ _latest_github_release () { # {{{
     curl --silent "https://github.com/${1}/releases/latest" | sed 's!.*/releases/tag/\(v[0-9].*\)">.*!\1!'
 } # }}}
 
-__debug () {
+__debug () { # {{{
     if [[ ${DEBUG} -gt 0 ]]; then
         echo -ne '*** DEBUG: '
         return 0
     else
         return 1
     fi
-}
+} # }}}
 
 _download () { # {{{
     local __name=$1
