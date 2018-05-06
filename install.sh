@@ -9,19 +9,20 @@ DISK='20g'
 ARCH="$(dpkg --print-architecture)"
 DEBUG=0
 
-# docker-machine calls amd64 differently...
-if [ ${ARCH} == 'amd64' ]; then
-    DM_ARCH='x86_64'
-else
-    DM_ARCH=${ARCH}
-fi
-# and helm does not know armhf...
+DM_ARCH=${ARCH}
+HELM_ARCH=${ARCH}
+KUBECTL_ARCH=${ARCH}
+
 case ${ARCH} in
-    armhf|aarch64)
+    armhf)
         HELM_ARCH='arm'
     ;;
-    *)
-        HELM_ARCH=${ARCH}
+    aarch64)
+        HELM_ARCH='arm64'
+        KUBECTL_ARCH='arm64'
+    ;;
+    amd64)
+        DM_ARCH='x86_64'
     ;;
 esac
 
@@ -152,8 +153,8 @@ else
     helm_version="v2.9.0"
 fi
 
-_minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-${ARCH}"
-_kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${kubectl_version}/bin/linux/${ARCH}/kubectl"
+_minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-${KUBECTL_ARCH}"
+_kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${kubectl_version}/bin/linux/${KUBECTL_ARCH}/kubectl"
 _dockermachine_url="https://github.com/docker/machine/releases/download/${dockermachine_version}/docker-machine-Linux-${DM_ARCH}"
 _kvm_driver_url="https://github.com/dhiltgen/docker-machine-kvm/releases/download/${kvm_driver_version}/docker-machine-driver-kvm-ubuntu16.04"
 _helm_url="https://storage.googleapis.com/kubernetes-helm/helm-${helm_version}-linux-${HELM_ARCH}.tar.gz"
