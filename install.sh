@@ -13,6 +13,7 @@ DM_ARCH=${ARCH}
 HELM_ARCH=${ARCH}
 KUBECTL_ARCH=${ARCH}
 UNSUPPORTED=""
+TOOLS_ONLY=0
 
 case ${ARCH} in
     armhf)
@@ -30,7 +31,7 @@ case ${ARCH} in
 esac
 
 usage () { # {{{
-    echo "usage: ${0} [-hlIcdm]"
+    echo "usage: ${0} [-hlIcdmDT]"
     echo ""
     echo " -h    this help"
     echo " -l    use latest versions"
@@ -38,10 +39,12 @@ usage () { # {{{
     echo " -c N  number of CPUs (default=${CPUS} (half of your host))"
     echo " -m N  amount of memory (in MiB) to use (default=${MEMORY})"
     echo " -d N  amount of diskspace to use (default=${DISK})"
+    echo " -D    DEBUG Infos"
+    echo " -T    Tools only, no minikube and kvm-stuff"
     echo ""
 } # }}}
 
-while getopts "hlIm:c:d:D" OPTION; do # {{{
+while getopts "hlIm:c:d:DT" OPTION; do # {{{
     case ${OPTION} in
         h)
             usage
@@ -64,6 +67,9 @@ while getopts "hlIm:c:d:D" OPTION; do # {{{
         ;;
         D)
             DEBUG=1
+        ;;
+        T)
+            TOOLS_ONLY=1
         ;;
     esac
 done # }}}
@@ -141,8 +147,8 @@ _download () { # {{{
         fi
 
         chmod +x ${INSTALL_PATH}/${__name}
-        echo ""
     fi
+    echo ""
 } # }}}
 
 if [[ ${LATEST} == 'true' ]]; then
@@ -198,11 +204,15 @@ esac
 # vim:ft=sh
 EOF
 
-_download minikube ${minikube_version} ${_minikube_url}
+
 _download kubectl ${kubectl_version} ${_kubectl_url}
-_download docker-machine ${dockermachine_version} ${_dockermachine_url}
-_download docker-machine-driver-kvm ${kvm_driver_version} ${_kvm_driver_url}
 _download helm ${helm_version} ${_helm_url} tar.gz linux-${HELM_ARCH}/helm
+
+if [[ ${TOOLS_ONLY} -eq 0 ]]; then
+    _download minikube ${minikube_version} ${_minikube_url}
+    _download docker-machine ${dockermachine_version} ${_dockermachine_url}
+    _download docker-machine-driver-kvm ${kvm_driver_version} ${_kvm_driver_url}
+fi
 
 if [[ ${START} == 'true' ]]; then
     echo "Starting minikube with ${MEMORY} MiB RAM, ${CPUS} CPUs and ${DISK} disk size:" 
