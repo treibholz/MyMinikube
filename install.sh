@@ -7,10 +7,11 @@ MEMORY=2048
 CPUS="$(($(nproc)/2))"
 DISK='20g'
 ARCH="$(dpkg --print-architecture)"
+DEBUG=0
 
 # docker-machine calls amd64 differently...
 if [ ${ARCH} == 'amd64' ]; then
-    DM_ARCH='x84_64'
+    DM_ARCH='x86_64'
 else
     DM_ARCH=${ARCH}
 fi
@@ -34,7 +35,7 @@ usage () { # {{{
     echo ""
 } # }}}
 
-while getopts "hlIm:c:d:" OPTION; do # {{{
+while getopts "hlIm:c:d:D" OPTION; do # {{{
     case ${OPTION} in
         h)
             usage
@@ -55,12 +56,24 @@ while getopts "hlIm:c:d:" OPTION; do # {{{
         d)
             DISK=${OPTARG}
         ;;
+        D)
+            DEBUG=1
+        ;;
     esac
 done # }}}
 
 _latest_github_release () { # {{{
     curl --silent "https://github.com/${1}/releases/latest" | sed 's!.*/releases/tag/\(v[0-9].*\)">.*!\1!'
 } # }}}
+
+__debug () {
+    if [[ ${DEBUG} -gt 0 ]]; then
+        echo -ne '*** DEBUG: '
+        return 0
+    else
+        return 1
+    fi
+}
 
 _download () { # {{{
     local __name=$1
@@ -91,7 +104,7 @@ _download () { # {{{
     fi
     
     if [[ $__download -gt 0 ]]; then
-
+        __debug && echo ${__url} 
         case ${__type} in
             binary)
                 curl --progress-bar -Lo ${INSTALL_PATH}/${__name} ${__url}
