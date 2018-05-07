@@ -22,6 +22,7 @@ case ${ARCH} in
     ;;
     armhf)
         HELM_ARCH='arm'
+        KUBECTL_ARCH='arm'
         UNSUPPORTED="docker-machine-driver-kvm|minikube|"
         START="false"
     ;;
