@@ -26,7 +26,7 @@ case ${ARCH} in
         UNSUPPORTED="docker-machine-driver-kvm|minikube|"
         START="false"
     ;;
-    aarch64)
+    aarch64|arm64)
         HELM_ARCH='arm64'
         KUBECTL_ARCH='arm64'
         UNSUPPORTED="docker-machine-driver-kvm|minikube|"
@@ -165,7 +165,7 @@ if [[ ${LATEST} == 'true' ]]; then
     dockermachine_version="$(_latest_github_release docker/machine)"
     kvm_driver_version="$(_latest_github_release dhiltgen/docker-machine-kvm)"
     kubectl_version="$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"
-    helm_version="$(_latest_github_release kubernetes/helm)"
+    helm_version="$(_latest_github_release helm/helm)"
 else
     echo 'Getting predefined versions.'
     minikube_version="v0.28.0"
