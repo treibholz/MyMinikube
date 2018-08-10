@@ -168,10 +168,10 @@ if [[ ${LATEST} == 'true' ]]; then
     helm_version="$(_latest_github_release helm/helm)"
 else
     echo 'Getting predefined versions.'
-    minikube_version="v0.28.0"
+    minikube_version="v0.28.2"
     dockermachine_version="v0.15.0"
     kvm_driver_version="v0.10.0"
-    kubectl_version="v1.11.0"
+    kubectl_version="v1.11.2"
     helm_version="v2.9.1"
 fi
 
