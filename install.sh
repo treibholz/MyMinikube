@@ -171,7 +171,7 @@ else
     minikube_version="v0.29.0"
     dockermachine_version="v0.15.0"
     kvm_driver_version="v0.10.0"
-    kubectl_version="v1.12.0"
+    kubectl_version="v1.12.1"
     helm_version="v2.11.0"
 fi
 
