@@ -83,7 +83,7 @@ while getopts "hlIm:c:d:DT" OPTION; do # {{{
 done # }}}
 
 _latest_github_release () { # {{{
-    curl --silent "https://github.com/${1}/releases/latest" | sed 's!.*/releases/tag/\(v[0-9].*\)">.*!\1!'
+    curl --silent "https://github.com/${1}/releases/latest" | sed 's!.*/releases/tag/\(v\?[0-9].*\)">.*!\1!'
 } # }}}
 
 __debug () { # {{{
@@ -166,6 +166,7 @@ if [[ ${LATEST} == 'true' ]]; then
     kvm_driver_version="$(_latest_github_release dhiltgen/docker-machine-kvm)"
     kubectl_version="$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"
     helm_version="$(_latest_github_release helm/helm)"
+    kubetail_version="$(_latest_github_release johanhaleby/kubetail)"
 else
     echo 'Getting predefined versions.'
     minikube_version="v0.30.0"
@@ -173,6 +174,7 @@ else
     kvm_driver_version="v0.10.0"
     kubectl_version="v1.12.3"
     helm_version="v2.11.0"
+    kubetail_version="1.6.5"
 fi
 
 _minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-${KUBECTL_ARCH}"
@@ -180,6 +182,7 @@ _kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${kubect
 _dockermachine_url="https://github.com/docker/machine/releases/download/${dockermachine_version}/docker-machine-Linux-${DM_ARCH}"
 _kvm_driver_url="https://github.com/dhiltgen/docker-machine-kvm/releases/download/${kvm_driver_version}/docker-machine-driver-kvm-ubuntu16.04"
 _helm_url="https://storage.googleapis.com/kubernetes-helm/helm-${helm_version}-linux-${HELM_ARCH}.tar.gz"
+_kubetail_url="https://raw.githubusercontent.com/johanhaleby/kubetail/${kubetail_version}/kubetail"
 
 export INSTALL_PATH="${HOME}/.minikube/bin/"
 mkdir -p ${INSTALL_PATH}
@@ -215,6 +218,7 @@ EOF
 
 _download kubectl ${kubectl_version} ${_kubectl_url}
 _download helm ${helm_version} ${_helm_url} tar.gz linux-${HELM_ARCH}/helm
+_download kubetail ${kubetail_version} ${_kubetail_url}
 
 if [[ ${TOOLS_ONLY} -eq 0 ]]; then
     _download minikube ${minikube_version} ${_minikube_url}
