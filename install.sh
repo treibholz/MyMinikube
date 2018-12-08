@@ -166,16 +166,21 @@ if [[ ${LATEST} == 'true' ]]; then
     kvm_driver_version="$(_latest_github_release dhiltgen/docker-machine-kvm)"
     kubectl_version="$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"
     helm_version="$(_latest_github_release helm/helm)"
-    kubetail_version="$(_latest_github_release johanhaleby/kubetail)"
+    kubetail_version="$(_latest_github_release johanhaleby/kubetail)" 
 else
     echo 'Getting predefined versions.'
-    minikube_version="v0.30.0"
-    dockermachine_version="v0.16.0"
-    kvm_driver_version="v0.10.0"
-    kubectl_version="v1.12.3"
-    helm_version="v2.11.0"
-    kubetail_version="1.6.5"
+    source predefined_versions
 fi
+
+echo "
+# known versions, that work for me
+minikube_version=\"${minikube_version}\"
+dockermachine_version=\"${dockermachine_version}\"
+kvm_driver_version=\"${kvm_driver_version}\"
+kubectl_version=\"${kubectl_version}\"
+helm_version=\"${helm_version}\"
+kubetail_version=\"${kubetail_version}\"
+" > used_versions
 
 _minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-${KUBECTL_ARCH}"
 _kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${kubectl_version}/bin/linux/${KUBECTL_ARCH}/kubectl"
