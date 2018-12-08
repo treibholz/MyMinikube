@@ -105,9 +105,13 @@ _download () { # {{{
     if grep -q "${__name}|" <( echo "${UNSUPPORTED}" ) ; then
         echo "INFO: ${__name} is unsupported for ${ARCH}, can't download!"
     else
-
+        
         local __cur_dir="$(pwd)"
-        local __sha256sum="${__cur_dir}/known_sha256sums/${ARCH}_${__name}_${__version}"
+        if [ ${__type} == "binary_noarch"  ]; then
+            local __sha256sum="${__cur_dir}/known_sha256sums/noarch_${__name}_${__version}"
+        else
+            local __sha256sum="${__cur_dir}/known_sha256sums/${ARCH}_${__name}_${__version}"
+        fi
         local __download=1
 
         echo "Downloading ${__name} version ${__version}"
@@ -130,7 +134,7 @@ _download () { # {{{
         if [[ $__download -gt 0 ]]; then
             __debug && echo ${__url} 
             case ${__type} in
-                binary)
+                binary|binary_noarch)
                     curl --progress-bar -Lo ${INSTALL_PATH}/${__name} ${__url}
                 ;;
                 tar.gz)
@@ -172,8 +176,7 @@ else
     source predefined_versions
 fi
 
-echo "
-# known versions, that work for me
+echo "# known versions, that work for me
 minikube_version=\"${minikube_version}\"
 dockermachine_version=\"${dockermachine_version}\"
 kvm_driver_version=\"${kvm_driver_version}\"
@@ -223,7 +226,7 @@ EOF
 
 _download kubectl ${kubectl_version} ${_kubectl_url}
 _download helm ${helm_version} ${_helm_url} tar.gz linux-${HELM_ARCH}/helm
-_download kubetail ${kubetail_version} ${_kubetail_url}
+_download kubetail ${kubetail_version} ${_kubetail_url} binary_noarch
 
 if [[ ${TOOLS_ONLY} -eq 0 ]]; then
     _download minikube ${minikube_version} ${_minikube_url}
