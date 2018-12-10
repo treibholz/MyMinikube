@@ -105,9 +105,13 @@ _download () { # {{{
     if grep -q "${__name}|" <( echo "${UNSUPPORTED}" ) ; then
         echo "INFO: ${__name} is unsupported for ${ARCH}, can't download!"
     else
-
+        
         local __cur_dir="$(pwd)"
-        local __sha256sum="${__cur_dir}/known_sha256sums/${ARCH}_${__name}_${__version}"
+        if [ ${__type} == "binary_noarch"  ]; then
+            local __sha256sum="${__cur_dir}/known_sha256sums/noarch_${__name}_${__version}"
+        else
+            local __sha256sum="${__cur_dir}/known_sha256sums/${ARCH}_${__name}_${__version}"
+        fi
         local __download=1
 
         echo "Downloading ${__name} version ${__version}"
@@ -130,7 +134,7 @@ _download () { # {{{
         if [[ $__download -gt 0 ]]; then
             __debug && echo ${__url} 
             case ${__type} in
-                binary)
+                binary|binary_noarch)
                     curl --progress-bar -Lo ${INSTALL_PATH}/${__name} ${__url}
                 ;;
                 tar.gz)
@@ -166,16 +170,20 @@ if [[ ${LATEST} == 'true' ]]; then
     kvm_driver_version="$(_latest_github_release dhiltgen/docker-machine-kvm)"
     kubectl_version="$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"
     helm_version="$(_latest_github_release helm/helm)"
-    kubetail_version="$(_latest_github_release johanhaleby/kubetail)"
+    kubetail_version="$(_latest_github_release johanhaleby/kubetail)" 
 else
     echo 'Getting predefined versions.'
-    minikube_version="v0.30.0"
-    dockermachine_version="v0.16.0"
-    kvm_driver_version="v0.10.0"
-    kubectl_version="v1.12.3"
-    helm_version="v2.11.0"
-    kubetail_version="1.6.5"
+    source predefined_versions
 fi
+
+echo "# known versions, that work for me
+minikube_version=\"${minikube_version}\"
+dockermachine_version=\"${dockermachine_version}\"
+kvm_driver_version=\"${kvm_driver_version}\"
+kubectl_version=\"${kubectl_version}\"
+helm_version=\"${helm_version}\"
+kubetail_version=\"${kubetail_version}\"
+" > used_versions
 
 _minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-${KUBECTL_ARCH}"
 _kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${kubectl_version}/bin/linux/${KUBECTL_ARCH}/kubectl"
@@ -218,7 +226,7 @@ EOF
 
 _download kubectl ${kubectl_version} ${_kubectl_url}
 _download helm ${helm_version} ${_helm_url} tar.gz linux-${HELM_ARCH}/helm
-_download kubetail ${kubetail_version} ${_kubetail_url}
+_download kubetail ${kubetail_version} ${_kubetail_url} binary_noarch
 
 if [[ ${TOOLS_ONLY} -eq 0 ]]; then
     _download minikube ${minikube_version} ${_minikube_url}
