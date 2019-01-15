@@ -17,19 +17,19 @@ TOOLS_ONLY=0
 
 case ${ARCH} in
     arm)
-        UNSUPPORTED="docker-machine-driver-kvm|minikube|docker-machine|"
+        UNSUPPORTED="docker-machine-driver-kvm2|minikube|docker-machine|"
         START="false"
     ;;
     armhf)
         HELM_ARCH='arm'
         KUBECTL_ARCH='arm'
-        UNSUPPORTED="docker-machine-driver-kvm|minikube|"
+        UNSUPPORTED="docker-machine-driver-kvm2|minikube|"
         START="false"
     ;;
     aarch64|arm64)
         HELM_ARCH='arm64'
         KUBECTL_ARCH='arm64'
-        UNSUPPORTED="docker-machine-driver-kvm|minikube|"
+        UNSUPPORTED="docker-machine-driver-kvm2|minikube|"
         START="false"
     ;;
     amd64)
@@ -167,7 +167,7 @@ if [[ ${LATEST} == 'true' ]]; then
     echo 'Getting latest versions! \o/'
     minikube_version="$(_latest_github_release kubernetes/minikube)"
     dockermachine_version="$(_latest_github_release docker/machine)"
-    kvm_driver_version="$(_latest_github_release dhiltgen/docker-machine-kvm)"
+    kvm2_driver_version="${minikube_version}"
     kubectl_version="$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"
     helm_version="$(_latest_github_release helm/helm)"
     kubetail_version="$(_latest_github_release johanhaleby/kubetail)" 
@@ -179,7 +179,7 @@ fi
 echo "# known versions, that work for me
 minikube_version=\"${minikube_version}\"
 dockermachine_version=\"${dockermachine_version}\"
-kvm_driver_version=\"${kvm_driver_version}\"
+kvm2_driver_version=\"${kvm2_driver_version}\"
 kubectl_version=\"${kubectl_version}\"
 helm_version=\"${helm_version}\"
 kubetail_version=\"${kubetail_version}\"
@@ -188,7 +188,7 @@ kubetail_version=\"${kubetail_version}\"
 _minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-${KUBECTL_ARCH}"
 _kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${kubectl_version}/bin/linux/${KUBECTL_ARCH}/kubectl"
 _dockermachine_url="https://github.com/docker/machine/releases/download/${dockermachine_version}/docker-machine-Linux-${DM_ARCH}"
-_kvm_driver_url="https://github.com/dhiltgen/docker-machine-kvm/releases/download/${kvm_driver_version}/docker-machine-driver-kvm-ubuntu16.04"
+_kvm2_driver_url="https://storage.googleapis.com/minikube/releases/${kvm2_driver_version}/docker-machine-driver-kvm2"
 _helm_url="https://storage.googleapis.com/kubernetes-helm/helm-${helm_version}-linux-${HELM_ARCH}.tar.gz"
 _kubetail_url="https://raw.githubusercontent.com/johanhaleby/kubetail/${kubetail_version}/kubetail"
 
@@ -231,15 +231,15 @@ _download kubetail ${kubetail_version} ${_kubetail_url} binary_noarch
 if [[ ${TOOLS_ONLY} -eq 0 ]]; then
     _download minikube ${minikube_version} ${_minikube_url}
     _download docker-machine ${dockermachine_version} ${_dockermachine_url}
-    _download docker-machine-driver-kvm ${kvm_driver_version} ${_kvm_driver_url}
+    _download docker-machine-driver-kvm2 ${kvm2_driver_version} ${_kvm2_driver_url}
 fi
 
 if [[ ${START} == 'true' ]]; then
     echo "Starting minikube with ${MEMORY} MiB RAM, ${CPUS} CPUs and ${DISK} disk size:" 
-    minikube start --vm-driver=kvm --memory=${MEMORY} --cpus=${CPUS} --disk-size=${DISK}
+    minikube start --vm-driver=kvm2 --memory=${MEMORY} --cpus=${CPUS} --disk-size=${DISK}
 else
     echo "create your minikube with:"
-    echo "$ minikube start --vm-driver=kvm --memory=${MEMORY} --cpus=${CPUS} --disk-size=${DISK}"
+    echo "$ minikube start --vm-driver=kvm2 --memory=${MEMORY} --cpus=${CPUS} --disk-size=${DISK}"
 fi
 
 echo "" 
