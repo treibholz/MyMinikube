@@ -105,7 +105,7 @@ _download () { # {{{
     if grep -q "${__name}|" <( echo "${UNSUPPORTED}" ) ; then
         echo "INFO: ${__name} is unsupported for ${ARCH}, can't download!"
     else
-        
+
         local __cur_dir="$(pwd)"
         if [ ${__type} == "binary_noarch"  ]; then
             local __sha256sum="${__cur_dir}/known_sha256sums/noarch_${__name}_${__version}"
@@ -120,7 +120,7 @@ _download () { # {{{
             if [[ -f ${__sha256sum}  ]]; then
                 cd ${INSTALL_PATH}
                 echo -ne "Checking sha256sum of locally available "
-                
+
                 if sha256sum -c ${__sha256sum}; then
                     echo "no need to download."
                     __download=0
@@ -130,9 +130,9 @@ _download () { # {{{
                 cd ${__cur_dir}
             fi
         fi
-        
+
         if [[ $__download -gt 0 ]]; then
-            __debug && echo ${__url} 
+            __debug && echo ${__url}
             case ${__type} in
                 binary|binary_noarch)
                     curl --progress-bar -Lo ${INSTALL_PATH}/${__name} ${__url}
@@ -170,7 +170,7 @@ if [[ ${LATEST} == 'true' ]]; then
     kvm2_driver_version="${minikube_version}"
     k8s_version="$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"
     helm_version="$(_latest_github_release helm/helm)"
-    kubetail_version="$(_latest_github_release johanhaleby/kubetail)" 
+    kubetail_version="$(_latest_github_release johanhaleby/kubetail)"
 else
     echo 'Getting predefined versions.'
     source predefined_versions
@@ -223,7 +223,6 @@ esac
 # vim:ft=sh
 EOF
 
-
 _download kubectl ${k8s_version} ${_kubectl_url}
 _download helm ${helm_version} ${_helm_url} tar.gz linux-${HELM_ARCH}/helm
 _download kubetail ${kubetail_version} ${_kubetail_url} binary_noarch
@@ -234,16 +233,30 @@ if [[ ${TOOLS_ONLY} -eq 0 ]]; then
     _download docker-machine-driver-kvm2 ${kvm2_driver_version} ${_kvm2_driver_url}
 fi
 
-__minkube_starter="minikube start --kubernetes-version=${k8s_version} --vm-driver=kvm2 --memory=${MEMORY} --cpus=${CPUS} --disk-size=${DISK}"
+echo "> minikube profile MyMinikube"
+minikube profile MyMinikube
+echo "> minikube config set kubernetes-version ${k8s_version}"
+minikube config set kubernetes-version ${k8s_version}
+echo "> minikube config set vm-driver kvm2"
+minikube config set vm-driver kvm2
+echo "> minikube config set memory ${MEMORY}"
+minikube config set memory ${MEMORY}
+echo "> minikube config set cpus ${CPUS}"
+minikube config set cpus ${CPUS}
+echo "> minikube config set disk-size ${DISK}"
+minikube config set disk-size ${DISK}
 
+__minkube_starter="minikube start"
+
+echo -ne "\n\n"
 if [[ ${START} == 'true' ]]; then
-    echo "Starting Kubernetes ${k8s_version} on minikube ${minikube_version} with ${MEMORY} MiB RAM, ${CPUS} CPUs and ${DISK} disk size:" 
+    echo "Starting Kubernetes ${k8s_version} on minikube ${minikube_version} with ${MEMORY} MiB RAM, ${CPUS} CPUs and ${DISK} disk size:"
     ${__minkube_starter}
 else
-    echo "create your minikube with:"
+    echo "start your minikube with:"
     echo "$ ${__minkube_starter}"
 fi
 
-echo "" 
+echo ""
 echo "run '. minienv' to enable your minikube-environment in your shell"
-echo "" 
+echo ""
