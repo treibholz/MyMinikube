@@ -237,7 +237,7 @@ if [[ ${TOOLS_ONLY} -eq 0 ]]; then
     _download docker-machine-driver-kvm2 ${kvm2_driver_version} ${_kvm2_driver_url}
 
     if grep -q "minikube|" <( echo "${UNSUPPORTED}" ) ; then
-        echo "INFO: minikube is unsupported for ${ARCH}, can't config/start!"
+        echo "INFO: minikube is unsupported for ${ARCH}, can't config/start, but have fun with the other tools!"
     else
         echo "> minikube profile MyMinikube"
         minikube profile MyMinikube
