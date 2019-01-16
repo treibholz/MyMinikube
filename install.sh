@@ -235,32 +235,36 @@ if [[ ${TOOLS_ONLY} -eq 0 ]]; then
     _download minikube ${minikube_version} ${_minikube_url}
     _download docker-machine ${dockermachine_version} ${_dockermachine_url}
     _download docker-machine-driver-kvm2 ${kvm2_driver_version} ${_kvm2_driver_url}
+
+    if grep -q "minikube|" <( echo "${UNSUPPORTED}" ) ; then
+        echo "INFO: minikube is unsupported for ${ARCH}, can't config/start!"
+    else
+        echo "> minikube profile MyMinikube"
+        minikube profile MyMinikube
+        echo "> minikube config set kubernetes-version ${k8s_version}"
+        minikube config set kubernetes-version ${k8s_version}
+        echo "> minikube config set vm-driver kvm2"
+        minikube config set vm-driver kvm2
+        echo "> minikube config set memory ${MEMORY}"
+        minikube config set memory ${MEMORY}
+        echo "> minikube config set cpus ${CPUS}"
+        minikube config set cpus ${CPUS}
+        echo "> minikube config set disk-size ${DISK}"
+        minikube config set disk-size ${DISK}
+
+        __minkube_starter="minikube start"
+
+        echo -ne "\n\n"
+        if [[ ${START} == 'true' ]]; then
+            echo "Starting Kubernetes ${k8s_version} on minikube ${minikube_version} with ${MEMORY} MiB RAM, ${CPUS} CPUs and ${DISK} disk size:"
+            ${__minkube_starter}
+        else
+            echo "start your minikube with:"
+            echo "$ ${__minkube_starter}"
+        fi
+
+        echo ""
+        echo "run '. minienv' to enable your minikube-environment in your shell"
+        echo ""
+    fi
 fi
-
-echo "> minikube profile MyMinikube"
-minikube profile MyMinikube
-echo "> minikube config set kubernetes-version ${k8s_version}"
-minikube config set kubernetes-version ${k8s_version}
-echo "> minikube config set vm-driver kvm2"
-minikube config set vm-driver kvm2
-echo "> minikube config set memory ${MEMORY}"
-minikube config set memory ${MEMORY}
-echo "> minikube config set cpus ${CPUS}"
-minikube config set cpus ${CPUS}
-echo "> minikube config set disk-size ${DISK}"
-minikube config set disk-size ${DISK}
-
-__minkube_starter="minikube start"
-
-echo -ne "\n\n"
-if [[ ${START} == 'true' ]]; then
-    echo "Starting Kubernetes ${k8s_version} on minikube ${minikube_version} with ${MEMORY} MiB RAM, ${CPUS} CPUs and ${DISK} disk size:"
-    ${__minkube_starter}
-else
-    echo "start your minikube with:"
-    echo "$ ${__minkube_starter}"
-fi
-
-echo ""
-echo "run '. minienv' to enable your minikube-environment in your shell"
-echo ""
