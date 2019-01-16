@@ -197,29 +197,33 @@ mkdir -p ${INSTALL_PATH}
 PATH="${INSTALL_PATH}:${PATH}"
 
 cat <<- EOF > minienv
-export PATH="${INSTALL_PATH}:\${PATH}"
-__shell=\$(basename \$(realpath /proc/\$\$/exe))
+if [[ "\${_MINIKUBE_ENV}" != "" ]]; then
+    echo "MiniKube Environment already set"
+else
+    export PATH="${INSTALL_PATH}:\${PATH}"
+    __shell=\$(basename \$(realpath /proc/\$\$/exe))
 
-case \${__shell} in
-    bash)
-        echo "detected bash"
-        source <(kubectl completion bash)
-        source <(minikube completion bash)
-        source <(helm completion bash)
-        eval \$(minikube docker-env)
-        PS1="[+] \${PS1}"
-    ;;
-    zsh)
-        echo "detected zsh"
-        source <(kubectl completion zsh)
-        source <(minikube completion zsh)
-        source <(helm completion zsh)
-        eval \$(minikube docker-env)
-    ;;
-    *)
-        echo "Unknown shell"
-    ;;
-esac
+    case \${__shell} in
+        bash|zsh)
+            echo "## detected \${__shell}"
+            echo "+ loading shell completion for kubectl"
+            source <(kubectl completion \${__shell})
+            echo "+ loading shell completion for minikube"
+            source <(minikube completion \${__shell})
+            echo "+ loading shell completion for helm"
+            source <(helm completion \${__shell})
+            echo "+ loading minikube docker-environment"
+            eval \$(minikube docker-env)
+            if [[ \${__shell} == "bash" ]]; then
+                export PS1="[+] \${PS1}"
+            fi
+        ;;
+        *)
+            echo "Unknown shell"
+        ;;
+    esac
+    export _MINIKUBE_ENV="\$(pwd)"
+fi
 # vim:ft=sh
 EOF
 
