@@ -2,7 +2,7 @@
 minikube_version="v0.32.0"
 dockermachine_version="v0.16.1"
 kvm2_driver_version="v0.32.0"
-kubectl_version="v1.13.2"
+k8s_version="v1.13.2"
 helm_version="v2.12.2"
 kubetail_version="1.6.5"
 

@@ -168,7 +168,7 @@ if [[ ${LATEST} == 'true' ]]; then
     minikube_version="$(_latest_github_release kubernetes/minikube)"
     dockermachine_version="$(_latest_github_release docker/machine)"
     kvm2_driver_version="${minikube_version}"
-    kubectl_version="$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"
+    k8s_version="$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"
     helm_version="$(_latest_github_release helm/helm)"
     kubetail_version="$(_latest_github_release johanhaleby/kubetail)" 
 else
@@ -180,13 +180,13 @@ echo "# known versions, that work for me
 minikube_version=\"${minikube_version}\"
 dockermachine_version=\"${dockermachine_version}\"
 kvm2_driver_version=\"${kvm2_driver_version}\"
-kubectl_version=\"${kubectl_version}\"
+k8s_version=\"${k8s_version}\"
 helm_version=\"${helm_version}\"
 kubetail_version=\"${kubetail_version}\"
 " > used_versions
 
 _minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-${KUBECTL_ARCH}"
-_kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${kubectl_version}/bin/linux/${KUBECTL_ARCH}/kubectl"
+_kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${k8s_version}/bin/linux/${KUBECTL_ARCH}/kubectl"
 _dockermachine_url="https://github.com/docker/machine/releases/download/${dockermachine_version}/docker-machine-Linux-${DM_ARCH}"
 _kvm2_driver_url="https://storage.googleapis.com/minikube/releases/${kvm2_driver_version}/docker-machine-driver-kvm2"
 _helm_url="https://storage.googleapis.com/kubernetes-helm/helm-${helm_version}-linux-${HELM_ARCH}.tar.gz"
@@ -224,7 +224,7 @@ esac
 EOF
 
 
-_download kubectl ${kubectl_version} ${_kubectl_url}
+_download kubectl ${k8s_version} ${_kubectl_url}
 _download helm ${helm_version} ${_helm_url} tar.gz linux-${HELM_ARCH}/helm
 _download kubetail ${kubetail_version} ${_kubetail_url} binary_noarch
 
@@ -234,12 +234,14 @@ if [[ ${TOOLS_ONLY} -eq 0 ]]; then
     _download docker-machine-driver-kvm2 ${kvm2_driver_version} ${_kvm2_driver_url}
 fi
 
+__minkube_starter="minikube start --kubernetes-version=${k8s_version} --vm-driver=kvm2 --memory=${MEMORY} --cpus=${CPUS} --disk-size=${DISK}"
+
 if [[ ${START} == 'true' ]]; then
-    echo "Starting minikube with ${MEMORY} MiB RAM, ${CPUS} CPUs and ${DISK} disk size:" 
-    minikube start --vm-driver=kvm2 --memory=${MEMORY} --cpus=${CPUS} --disk-size=${DISK}
+    echo "Starting Kubernetes ${k8s_version} on minikube ${minikube_version} with ${MEMORY} MiB RAM, ${CPUS} CPUs and ${DISK} disk size:" 
+    ${__minkube_starter}
 else
     echo "create your minikube with:"
-    echo "$ minikube start --vm-driver=kvm2 --memory=${MEMORY} --cpus=${CPUS} --disk-size=${DISK}"
+    echo "$ ${__minkube_starter}"
 fi
 
 echo "" 
