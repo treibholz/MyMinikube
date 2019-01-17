@@ -12,64 +12,99 @@ This installs a complete minikube on a Debian-Environment with KVM.
 
 ```
 $ ./install.sh -h
-usage: ./install.sh [-hlIcdm]
+usage: ./install.sh [-hlIcdmDT]
 
  -h    this help
  -l    use latest versions
  -I    Only install, don' start/initialize your minikube afterwards
- -c N  number of CPUs (default=2)
+ -c N  number of CPUs (default=2 (half of your host))
  -m N  amount of memory (in MiB) to use (default=2048)
  -d N  amount of diskspace to use (default=20g)
+ -D    DEBUG Infos
+ -T    Tools only, no minikube and kvm-stuff, and don't start anything
 
 ```
 
 ## Example:
 ```
 klaus@cyberdeck:~/MyMinikube$ ./install.sh
-Downloading minikube version v0.21.0
-######################################################################## 100.0%
-Checking sha256sum of minikube: OK
-
-Downloading kubectl version v1.7.4
+Getting predefined versions.
+Downloading kubectl version v1.13.2
 ######################################################################## 100.0%
 Checking sha256sum of kubectl: OK
 
-Downloading docker-machine version v0.12.2
+Downloading helm version v2.12.2
+######################################################################## 100.0%
+Checking sha256sum of helm: OK
+
+Downloading kubetail version 1.6.5
+######################################################################## 100.0%
+Checking sha256sum of kubetail: OK
+
+Downloading minikube version v0.32.0
+######################################################################## 100.0%
+Checking sha256sum of minikube: OK
+
+Downloading docker-machine version v0.16.1
 ######################################################################## 100.0%
 Checking sha256sum of docker-machine: OK
 
-Downloading docker-machine-driver-kvm version v0.10.0
+Downloading docker-machine-driver-kvm2 version v0.32.0
 ######################################################################## 100.0%
-Checking sha256sum of docker-machine-driver-kvm: OK
+Checking sha256sum of docker-machine-driver-kvm2: OK
 
-Starting local Kubernetes v1.7.0 cluster...
+> minikube profile MyMinikube
+minikube profile was successfully set to MyMinikube
+> minikube config set kubernetes-version v1.13.2
+> minikube config set vm-driver kvm2
+These changes will take effect upon a minikube delete and then a minikube start
+> minikube config set memory 2048
+These changes will take effect upon a minikube delete and then a minikube start
+> minikube config set cpus 2
+These changes will take effect upon a minikube delete and then a minikube start
+> minikube config set disk-size 20g
+These changes will take effect upon a minikube delete and then a minikube start
+
+
+Starting Kubernetes v1.13.2 on minikube v0.32.0 with 2048 MiB RAM, 2 CPUs and 20g disk size:
+Starting local Kubernetes v1.13.2 cluster...
 Starting VM...
 Downloading Minikube ISO
- 97.80 MB / 97.80 MB [==============================================] 100.00% 0s
+ 178.88 MB / 178.88 MB [============================================] 100.00% 0s
 Getting VM IP address...
 Moving files into cluster...
+Downloading kubeadm v1.13.2
+Downloading kubelet v1.13.2
+Finished Downloading kubeadm v1.13.2
+Finished Downloading kubelet v1.13.2
 Setting up certs...
-Starting cluster components...
 Connecting to cluster...
 Setting up kubeconfig...
-Kubectl is now configured to use the cluster.
+Stopping extra container runtimes...
+Starting cluster components...
+Verifying kubelet health ...
+Verifying apiserver health ...Kubectl is now configured to use the cluster.
+Loading cached images from config file.
 
-run '. minienv' to enable your minikube-environment
+
+Everything looks great. Please enjoy minikube!
+
+run '. minienv' to enable your minikube-environment in your shell
 
 klaus@cyberdeck:~/MyMinikube$
 ```
 
-```
-klaus@cyberdeck:~/MyMinikube$ cat minienv
-export PATH="/home/klaus/.minikube/bin/:${PATH}"
-klaus@cyberdeck:~/MyMinikube$ source minienv
-klaus@cyberdeck:~/MyMinikube$ minikube status
-minikube: Running
-localkube: Running
-kubectl: Correctly Configured: pointing to minikube-vm at 192.168.42.182
-klaus@cyberdeck:~/MyMinikube$
-```
+the minienv works for bash and zsh.
 
+```
+klaus@cyberdeck:~/MyMinikube$ source minienv 
+## detected bash
++ loading shell completion for kubectl
++ loading shell completion for minikube
++ loading shell completion for helm
++ loading minikube docker-environment
+[+] klaus@cyberdeck:~/MyMinikube$
+```
 
 ## Prerequisities
 

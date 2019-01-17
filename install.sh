@@ -17,19 +17,19 @@ TOOLS_ONLY=0
 
 case ${ARCH} in
     arm)
-        UNSUPPORTED="docker-machine-driver-kvm|minikube|docker-machine|"
+        UNSUPPORTED="docker-machine-driver-kvm2|minikube|docker-machine|"
         START="false"
     ;;
     armhf)
         HELM_ARCH='arm'
         KUBECTL_ARCH='arm'
-        UNSUPPORTED="docker-machine-driver-kvm|minikube|"
+        UNSUPPORTED="docker-machine-driver-kvm2|minikube|"
         START="false"
     ;;
     aarch64|arm64)
         HELM_ARCH='arm64'
         KUBECTL_ARCH='arm64'
-        UNSUPPORTED="docker-machine-driver-kvm|minikube|"
+        UNSUPPORTED="docker-machine-driver-kvm2|minikube|"
         START="false"
     ;;
     amd64)
@@ -83,7 +83,7 @@ while getopts "hlIm:c:d:DT" OPTION; do # {{{
 done # }}}
 
 _latest_github_release () { # {{{
-    curl --silent "https://github.com/${1}/releases/latest" | sed 's!.*/releases/tag/\(v[0-9].*\)">.*!\1!'
+    curl --silent "https://github.com/${1}/releases/latest" | sed 's!.*/releases/tag/\(v\?[0-9].*\)">.*!\1!'
 } # }}}
 
 __debug () { # {{{
@@ -107,7 +107,11 @@ _download () { # {{{
     else
 
         local __cur_dir="$(pwd)"
-        local __sha256sum="${__cur_dir}/known_sha256sums/${ARCH}_${__name}_${__version}"
+        if [ ${__type} == "binary_noarch"  ]; then
+            local __sha256sum="${__cur_dir}/known_sha256sums/noarch_${__name}_${__version}"
+        else
+            local __sha256sum="${__cur_dir}/known_sha256sums/${ARCH}_${__name}_${__version}"
+        fi
         local __download=1
 
         echo "Downloading ${__name} version ${__version}"
@@ -116,7 +120,7 @@ _download () { # {{{
             if [[ -f ${__sha256sum}  ]]; then
                 cd ${INSTALL_PATH}
                 echo -ne "Checking sha256sum of locally available "
-                
+
                 if sha256sum -c ${__sha256sum}; then
                     echo "no need to download."
                     __download=0
@@ -126,11 +130,11 @@ _download () { # {{{
                 cd ${__cur_dir}
             fi
         fi
-        
+
         if [[ $__download -gt 0 ]]; then
-            __debug && echo ${__url} 
+            __debug && echo ${__url}
             case ${__type} in
-                binary)
+                binary|binary_noarch)
                     curl --progress-bar -Lo ${INSTALL_PATH}/${__name} ${__url}
                 ;;
                 tar.gz)
@@ -163,73 +167,104 @@ if [[ ${LATEST} == 'true' ]]; then
     echo 'Getting latest versions! \o/'
     minikube_version="$(_latest_github_release kubernetes/minikube)"
     dockermachine_version="$(_latest_github_release docker/machine)"
-    kvm_driver_version="$(_latest_github_release dhiltgen/docker-machine-kvm)"
-    kubectl_version="$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"
+    kvm2_driver_version="${minikube_version}"
+    k8s_version="$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"
     helm_version="$(_latest_github_release helm/helm)"
+    kubetail_version="$(_latest_github_release johanhaleby/kubetail)"
 else
     echo 'Getting predefined versions.'
-    minikube_version="v0.28.2"
-    dockermachine_version="v0.15.0"
-    kvm_driver_version="v0.10.0"
-    kubectl_version="v1.11.2"
-    helm_version="v2.9.1"
+    source predefined_versions
 fi
 
+echo "# known versions, that work for me
+minikube_version=\"${minikube_version}\"
+dockermachine_version=\"${dockermachine_version}\"
+kvm2_driver_version=\"${kvm2_driver_version}\"
+k8s_version=\"${k8s_version}\"
+helm_version=\"${helm_version}\"
+kubetail_version=\"${kubetail_version}\"
+" > used_versions
+
 _minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-${KUBECTL_ARCH}"
-_kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${kubectl_version}/bin/linux/${KUBECTL_ARCH}/kubectl"
+_kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${k8s_version}/bin/linux/${KUBECTL_ARCH}/kubectl"
 _dockermachine_url="https://github.com/docker/machine/releases/download/${dockermachine_version}/docker-machine-Linux-${DM_ARCH}"
-_kvm_driver_url="https://github.com/dhiltgen/docker-machine-kvm/releases/download/${kvm_driver_version}/docker-machine-driver-kvm-ubuntu16.04"
+_kvm2_driver_url="https://storage.googleapis.com/minikube/releases/${kvm2_driver_version}/docker-machine-driver-kvm2"
 _helm_url="https://storage.googleapis.com/kubernetes-helm/helm-${helm_version}-linux-${HELM_ARCH}.tar.gz"
+_kubetail_url="https://raw.githubusercontent.com/johanhaleby/kubetail/${kubetail_version}/kubetail"
 
 export INSTALL_PATH="${HOME}/.minikube/bin/"
 mkdir -p ${INSTALL_PATH}
 PATH="${INSTALL_PATH}:${PATH}"
 
 cat <<- EOF > minienv
-export PATH="${INSTALL_PATH}:\${PATH}"
-__shell=\$(basename \$(realpath /proc/\$\$/exe))
+if [[ "\${_MINIKUBE_ENV}" != "" ]]; then
+    echo "MiniKube Environment already set"
+else
+    export PATH="${INSTALL_PATH}:\${PATH}"
+    __shell=\$(basename \$(realpath /proc/\$\$/exe))
 
-case \${__shell} in
-    bash)
-        echo "detected bash"
-        source <(kubectl completion bash)
-        source <(minikube completion bash)
-        source <(helm completion bash)
-        eval \$(minikube docker-env)
-        PS1="[+] \${PS1}"
-    ;;
-    zsh)
-        echo "detected zsh"
-        source <(kubectl completion zsh)
-        source <(minikube completion zsh)
-        source <(helm completion zsh)
-        eval \$(minikube docker-env)
-    ;;
-    *)
-        echo "Unknown shell"
-    ;;
-esac
+    case \${__shell} in
+        bash|zsh)
+            echo "## detected \${__shell}"
+            echo "+ loading shell completion for kubectl"
+            source <(kubectl completion \${__shell})
+            echo "+ loading shell completion for minikube"
+            source <(minikube completion \${__shell})
+            echo "+ loading shell completion for helm"
+            source <(helm completion \${__shell})
+            echo "+ loading minikube docker-environment"
+            eval \$(minikube docker-env)
+            if [[ \${__shell} == "bash" ]]; then
+                export PS1="[+] \${PS1}"
+            fi
+        ;;
+        *)
+            echo "Unknown shell"
+        ;;
+    esac
+    export _MINIKUBE_ENV="\$(pwd)"
+fi
 # vim:ft=sh
 EOF
 
-
-_download kubectl ${kubectl_version} ${_kubectl_url}
+_download kubectl ${k8s_version} ${_kubectl_url}
 _download helm ${helm_version} ${_helm_url} tar.gz linux-${HELM_ARCH}/helm
+_download kubetail ${kubetail_version} ${_kubetail_url} binary_noarch
 
 if [[ ${TOOLS_ONLY} -eq 0 ]]; then
     _download minikube ${minikube_version} ${_minikube_url}
     _download docker-machine ${dockermachine_version} ${_dockermachine_url}
-    _download docker-machine-driver-kvm ${kvm_driver_version} ${_kvm_driver_url}
-fi
+    _download docker-machine-driver-kvm2 ${kvm2_driver_version} ${_kvm2_driver_url}
 
-if [[ ${START} == 'true' ]]; then
-    echo "Starting minikube with ${MEMORY} MiB RAM, ${CPUS} CPUs and ${DISK} disk size:" 
-    minikube start --vm-driver=kvm --memory=${MEMORY} --cpus=${CPUS} --disk-size=${DISK}
-else
-    echo "create your minikube with:"
-    echo "$ minikube start --vm-driver=kvm --memory=${MEMORY} --cpus=${CPUS} --disk-size=${DISK}"
-fi
+    if grep -q "minikube|" <( echo "${UNSUPPORTED}" ) ; then
+        echo "INFO: minikube is unsupported for ${ARCH}, can't config/start, but have fun with the other tools!"
+    else
+        echo "> minikube profile MyMinikube"
+        minikube profile MyMinikube
+        echo "> minikube config set kubernetes-version ${k8s_version}"
+        minikube config set kubernetes-version ${k8s_version}
+        echo "> minikube config set vm-driver kvm2"
+        minikube config set vm-driver kvm2
+        echo "> minikube config set memory ${MEMORY}"
+        minikube config set memory ${MEMORY}
+        echo "> minikube config set cpus ${CPUS}"
+        minikube config set cpus ${CPUS}
+        echo "> minikube config set disk-size ${DISK}"
+        minikube config set disk-size ${DISK}
 
-echo "" 
-echo "run '. minienv' to enable your minikube-environment in your shell"
-echo "" 
+        __minkube_starter="minikube start"
+
+        echo -ne "\n\n"
+        if [[ ${START} == 'true' ]]; then
+            echo "Starting Kubernetes ${k8s_version} on minikube ${minikube_version} with ${MEMORY} MiB RAM, ${CPUS} CPUs and ${DISK} disk size:"
+            ${__minkube_starter}
+        else
+            echo "start your minikube with:"
+            echo "$ ${__minkube_starter}"
+        fi
+
+        echo ""
+        echo "run '. minienv' to enable your minikube-environment in your shell"
+        echo ""
+    fi
+fi
