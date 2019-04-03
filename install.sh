@@ -6,8 +6,14 @@ START="true"
 MEMORY=2048
 CPUS="$(($(nproc)/2))"
 DISK='20g'
-ARCH="$(dpkg --print-architecture)"
 DEBUG=0
+
+# FIXME: this should not be debian-based
+if [ -x /usr/bin/dpkg ]; then
+    ARCH="$(dpkg --print-architecture)"
+else
+    ARCH="$(uname -m)"
+fi
 
 DM_ARCH=${ARCH}
 HELM_ARCH=${ARCH}
@@ -16,7 +22,10 @@ UNSUPPORTED=""
 TOOLS_ONLY=0
 
 case ${ARCH} in
-    arm)
+    arm|armv7l)
+        HELM_ARCH='arm'
+        KUBECTL_ARCH='arm'
+        DM_ARCH='arm'
         UNSUPPORTED="docker-machine-driver-kvm2|minikube|docker-machine|"
         START="false"
     ;;
