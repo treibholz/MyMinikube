@@ -20,6 +20,7 @@ HELM_ARCH=${ARCH}
 KUBECTL_ARCH=${ARCH}
 UNSUPPORTED=""
 TOOLS_ONLY=0
+INSTALL_KUBEADM=0
 
 case ${ARCH} in
     arm|armv7l)
@@ -57,10 +58,11 @@ usage () { # {{{
     echo " -d N  amount of diskspace to use (default=${DISK})"
     echo " -D    DEBUG Infos"
     echo " -T    Tools only, no minikube and kvm-stuff, and don't start anything"
+    echo " -a    also install kubeadm"
     echo ""
 } # }}}
 
-while getopts "hlIm:c:d:DT" OPTION; do # {{{
+while getopts "hlaIm:c:d:DT" OPTION; do # {{{
     case ${OPTION} in
         h)
             usage
@@ -68,6 +70,9 @@ while getopts "hlIm:c:d:DT" OPTION; do # {{{
         ;;
         l)
             LATEST="true"
+        ;;
+        a)
+            INSTALL_KUBEADM=1
         ;;
         I)
             START="false"
@@ -196,6 +201,7 @@ kubetail_version=\"${kubetail_version}\"
 
 _minikube_url="https://storage.googleapis.com/minikube/releases/${minikube_version}/minikube-linux-${KUBECTL_ARCH}"
 _kubectl_url="https://storage.googleapis.com/kubernetes-release/release/${k8s_version}/bin/linux/${KUBECTL_ARCH}/kubectl"
+_kubeadm_url="https://storage.googleapis.com/kubernetes-release/release/${k8s_version}/bin/linux/${KUBECTL_ARCH}/kubeadm"
 _dockermachine_url="https://github.com/docker/machine/releases/download/${dockermachine_version}/docker-machine-Linux-${DM_ARCH}"
 _kvm2_driver_url="https://storage.googleapis.com/minikube/releases/${kvm2_driver_version}/docker-machine-driver-kvm2"
 _helm_url="https://storage.googleapis.com/kubernetes-helm/helm-${helm_version}-linux-${HELM_ARCH}.tar.gz"
@@ -239,6 +245,11 @@ EOF
 _download kubectl ${k8s_version} ${_kubectl_url}
 _download helm ${helm_version} ${_helm_url} tar.gz linux-${HELM_ARCH}/helm
 _download kubetail ${kubetail_version} ${_kubetail_url} binary_noarch
+
+if [[ ${INSTALL_KUBEADM} -eq 0 ]]; then
+    echo "sdfsdfdff"
+    _download kubeadm ${k8s_version} ${_kubeadm_url}
+fi
 
 if [[ ${TOOLS_ONLY} -eq 0 ]]; then
     _download minikube ${minikube_version} ${_minikube_url}
