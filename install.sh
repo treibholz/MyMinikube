@@ -246,8 +246,7 @@ _download kubectl ${k8s_version} ${_kubectl_url}
 _download helm ${helm_version} ${_helm_url} tar.gz linux-${HELM_ARCH}/helm
 _download kubetail ${kubetail_version} ${_kubetail_url} binary_noarch
 
-if [[ ${INSTALL_KUBEADM} -eq 0 ]]; then
-    echo "sdfsdfdff"
+if [[ ${INSTALL_KUBEADM} -eq 1 ]]; then
     _download kubeadm ${k8s_version} ${_kubeadm_url}
 fi
 
