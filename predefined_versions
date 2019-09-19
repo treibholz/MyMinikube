@@ -1,8 +1,8 @@
 # known versions, that work for me
 minikube_version="v1.3.1"
-dockermachine_version="v0.16.1"
+dockermachine_version="v0.16.2"
 kvm2_driver_version="v1.3.1"
-k8s_version="v1.15.3"
+k8s_version="v1.16.0"
 helm_version="v2.14.3"
 kubetail_version="1.6.10"
 
